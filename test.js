@@ -27,4 +27,7 @@ async function test_ajax(url){
 
 }
 
-test_ajax("http://baidu.com")
+//test_ajax("http://baidu.com")
+var a = {"a": 1}
+console.log(a)
+console.log(JSON.stringify(a))

@@ -1,12 +1,17 @@
+
+
 const fs = require('fs');
-const { url } = require('inspector');
 const puppeteer = require("puppeteer");
+
 
 const ROOT_URL = "http://www.qq.com";
 const HOST = get_host(ROOT_URL)
+const file_name = Date.parse(new Date()) + "result.txt";
+fs.writeFileSync(file_name,"");
 const DEEP = 6;
 
 const VISITED_URL = [];
+const Bloom_LIST = new BloomFilter(100000, 0.01);
 
 
 // 提取一级域名
@@ -30,9 +35,9 @@ function get_host(url){
 
 // url识别规则
 function isVaildUrl(url){
-    let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv']
-  
-    if(url.includes(HOST)) {
+    let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv'];
+    console.log(url)
+    if(url.indexOf(HOST)>0) {
       for(var index in black_list){
         if (url.endsWith(black_list[index])) {
         return false;
@@ -45,13 +50,14 @@ function isVaildUrl(url){
 }
 
 function url_deal(res){
-    if(isVaildUrl(res.url)){
+    if(isVaildUrl(res)){
         console.log(res);
-        var file_name = "result.txt";
-        if(!fs.existsSync(file_name)){
-            fs.writeFileSync(file_name,"");
-          }
-        fs.appendFileSync(file_name, res + "\n");
+        if(Bloom_LIST.contain(res)){
+            Bloom_LIST.add(res);
+            fs.appendFileSync(file_name, res + "\n");
+        }
+        
+        
     }
 }
 
@@ -66,7 +72,8 @@ async function ajax_get(req){
         "data": post_data,
         "type": "ajax"
     }
-    url_deal(res);
+    console.log(JSON.stringify(res))
+    url_deal(JSON.stringify(res));
     req.continue()
 }
 
@@ -146,6 +153,10 @@ async function href_get(){
     return urls;
 }
 
+function isDifferent(res) {
+
+}
+
 async function visitPage(url, deep) { 
     let browser = await puppeteer.launch({headless: false});
     let page =await browser.newPage();
@@ -156,10 +167,10 @@ async function visitPage(url, deep) {
     var forms = await page.evaluate(form_get);
     var hrefs = await page.evaluate(href_get);
     for(var i=0; i<forms.length; i++){
-        url_deal(forms[i]);
+        url_deal(JSON.stringify(forms[i]));
     }
     for(var i=0; i<hrefs.length; i++){
-        url_deal(hrefs[i]);
+        url_deal(JSON.stringify(hrefs[i]));
     }
 
     browser.close();
