@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bloomfilter.js": "^1.0.2",
     "puppeteer": "^13.5.1"
   }
 }
