@@ -3,7 +3,7 @@ const BloomFilter = require('bloomfilter.js');
 const fs = require('fs');
 const puppeteer = require("puppeteer");
 
-const IS_HEADLESS = false
+const IS_HEADLESS = true
 
 const ROOT_URL = "http://www.baidu.com";
 const HOST = get_host(ROOT_URL)
@@ -11,10 +11,10 @@ const file_name = Date.parse(new Date()) + "result.txt";
 fs.writeFileSync(file_name, "");
 
 // 递归深度
-const DEEP = 10;
+const DEEP = 3;
 
 
-const Bloom_LIST = new BloomFilter(1000000, 0.00001);
+const Bloom_LIST = new BloomFilter(1000000, 0.001);
 
 //睡眠函数
 function sleep(number){
@@ -50,11 +50,12 @@ function get_host(url){
 function isVaildUrl(url){
     let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv'];
     // console.log(url)
-    if(url.indexOf(HOST)>0) {
-      for(var index in black_list){
-        if (url.endsWith(black_list[index])) {
-        return false;
-      }
+    //if(url.indexOf(HOST)>0) {
+    if(true) {
+        for(var index in black_list){
+            if (url.endsWith(black_list[index])) {
+            return false;
+        }
     }
     return true;
     } else {
@@ -67,8 +68,10 @@ function res_to_url(res){
 
     var url = res["url"];
 
-    var l1 = url.lastIndexOf('?');
+    // var l1 = url.lastIndexOf('?');
+    var l1 = url.lastIndexOf('=');
     var l2 = url.lastIndexOf('/');
+    
     if(l1===-1&&l2===-1){
         return url;
     }
@@ -88,8 +91,8 @@ function res_to_url(res){
 // return true存储/false不存储
 function url_deal(res){
     if(isVaildUrl(JSON.stringify(res))){
-        // var url = res_to_url(res, 1);
-        var url = res["url"];
+        var url = res_to_url(res, 1);
+        // var url = res["url"];
         if(!Bloom_LIST.test(url)){
             console.log(url);
             Bloom_LIST.add(url);
@@ -226,9 +229,9 @@ async function visitPage(browser, url, deep) {
                     cache_url.push(hrefs[i].url);
                 }
             }
-
+            
             for(var i=0; i<cache_url.length; i++){
-                if(cache_url[i]=="javascript:;"||cache_url[i].indexOf("data:image/")!=-1){
+                if(cache_url[i].indexOf("javascript:")!=-1||cache_url[i].indexOf("data:image")!=-1){
                     continue;
                 }
                 // console.log(cache_url[i]);
@@ -237,7 +240,7 @@ async function visitPage(browser, url, deep) {
         }catch(err){
             //console.log(typeof(err));
             console.log(err);
-            await sleep(3);
+            await sleep(1);
         }
     }
 }
