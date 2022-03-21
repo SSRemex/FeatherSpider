@@ -244,12 +244,11 @@ async function visitPage(browser, url, deep) {
 
 
 async function main(){
-    var now = new Date();
-    var start = now.getTime();
+    var start = new Date();
     const browser = await puppeteer.launch({headless: IS_HEADLESS});
     await visitPage(browser ,ROOT_URL, DEEP);
     browser.close();
-    var end = now.getTime();
+    var end = new Date();
     var use = (end - start)/1000;
     console.log("DONE!用时："+ use.toString());
     
