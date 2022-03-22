@@ -68,10 +68,13 @@ function sleep(number){
         return 
     }
 }
-var a = new Date();
+// var a = new Date();
 
 
-sleep(10);
-var b = new Date();
+// sleep(10);
+// var b = new Date();
 
-console.log(b - a)
+// console.log(b - a)
+
+var url = "javascript:void(0);"
+console.log(url.indexOf("javascript"))

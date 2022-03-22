@@ -3,7 +3,7 @@ const BloomFilter = require('bloomfilter.js');
 const fs = require('fs');
 const puppeteer = require("puppeteer");
 
-const IS_HEADLESS = true
+const IS_HEADLESS = false
 
 const ROOT_URL = "http://www.baidu.com";
 const HOST = get_host(ROOT_URL)
@@ -68,8 +68,8 @@ function res_to_url(res){
 
     var url = res["url"];
 
-    // var l1 = url.lastIndexOf('?');
-    var l1 = url.lastIndexOf('=');
+    var l1 = url.lastIndexOf('?');
+    //var l1 = url.lastIndexOf('=');
     var l2 = url.lastIndexOf('/');
     
     if(l1===-1&&l2===-1){
@@ -87,18 +87,28 @@ function res_to_url(res){
 
     return new_url;
 }
+
+function black_url(url){
+    if(url.indexOf("javascript")==0||url.indexOf("data:")==0)
+        return true
+
+    return false
+}
+
 // url去重判断存储相关
 // return true存储/false不存储
 function url_deal(res){
     if(isVaildUrl(JSON.stringify(res))){
         var url = res_to_url(res, 1);
         // var url = res["url"];
-        if(!Bloom_LIST.test(url)){
-            console.log(url);
-            Bloom_LIST.add(url);
-            var res_str = JSON.stringify(res);
-            fs.appendFileSync(file_name, res_str + "\n");
-            return true;
+        if(!black_url(url)){
+            if(!Bloom_LIST.test(url)){
+                console.log(url);
+                Bloom_LIST.add(url);
+                var res_str = JSON.stringify(res);
+                fs.appendFileSync(file_name, res_str + "\n");
+                return true;
+            }
         }
         
         
@@ -229,17 +239,19 @@ async function visitPage(browser, url, deep) {
                     cache_url.push(hrefs[i].url);
                 }
             }
-            
+            page.close();
             for(var i=0; i<cache_url.length; i++){
-                if(cache_url[i].indexOf("javascript:")!=-1||cache_url[i].indexOf("data:image")!=-1){
+                if(black_url(cache_url[i])){
                     continue;
                 }
                 // console.log(cache_url[i]);
                 await visitPage(browser, cache_url[i], deep-1);
             }
+            
         }catch(err){
             //console.log(typeof(err));
             console.log(err);
+            page.close();
             await sleep(1);
         }
     }
