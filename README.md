@@ -1,11 +1,27 @@
 # FeatherSpider
-The spider based in puppeteer
-
+基于nodejs puppeteer
+依赖安装
 `npm i puppeteer`
 `npm i bloomfilters.js`
+运行
+`node main.js`
+> test.js  index.js 为测试文件，可忽略
+
+配置说明
+当前配置并未独立出来
+
+```js
+// 开启无头
+const IS_HEADLESS = false
+// 扫描根url
+const ROOT_URL = "http://www.baidu.com";
+
+// 递归深度
+const DEEP = 3;
+```
 
 模式
-
+当前不可配置 ，目前重复等级为3 不固定HOST
 重复等级 1（不过滤重复） 2 3（完全不重复）
 
 是否固定HOST
