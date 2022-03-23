@@ -3,8 +3,9 @@ const BloomFilter = require('bloomfilter.js');
 const fs = require('fs');
 const puppeteer = require("puppeteer");
 
-const IS_HEADLESS = false
+const IS_HEADLESS = true
 
+// const ROOT_URL = "https://benchmark.58corp.com/";
 const ROOT_URL = "http://www.baidu.com";
 const HOST = get_host(ROOT_URL)
 const file_name = Date.parse(new Date()) + "result.txt";
@@ -12,7 +13,8 @@ fs.writeFileSync(file_name, "");
 
 // 递归深度
 const DEEP = 3;
-
+// cookie
+const Cookie_str = "c=to3wGuTN-1632625117028-cf4c89d08dbcf-1277372903; _fmdata=uELNf7mIkZIbXLdzcU21aMym1Pkxld42RaMe7%2F0OEqL5%2FtibJwMPHI1Vq1%2BjYbLQsWlZMCemF3Tvi6d674Tjj85b0pHah%2BhJDOIYww2MqTY%3D; _xid=lph1eBbOiYp%2B3fr3vOqcEhBa3wWAAwICbmdky5RdVp5JN%2Fq2IONzb72d0yrPYe93TX%2FIepkV9xo%2B4Ka4E9gn6g%3D%3D; wmda_uuid=2ee22d828a5761d3ae9efe8d98c2a7de; wmda_visited_projects=%3B18101072869043; ec=UebkL1K1-1642140767728-99636794cc056190373960; _efmdata=GiOQa4ZrtHfgBa158iW6fhjYZgTXLSUBYTdozLkK7kCMRLB%2BQAyuLEg7zP4ZyYZJX2EtCToQuyO1JSi59cToF6eRTz8YeqPx2U21cNC7qEc%3D; 58tj_uuid=83385fd0-5d9e-44fc-9d71-e9f5327c6cb6; new_uv=1; als=0; ishare_sso_username=F3A5B8DE5F87C6027C5310A6A948C79E0F7F5E2D66983F73F127795DD5303D0B; _exid=lph1eBbOiYp%2B3fr3vOqcEhBa3wWAAwICbmdky5RdVp4CxMakW6neFc4%2Fkrzm%2Fm3rKFbz4b2xvWjSqyt4PgPUmA%3D%3D; dunCookie=1cbe781ac68cf854596a86e295703a6a933bfe6938373ac2a24fefd4eef87370004f2d1b2913ae96; benchmark_token=24d22550c223269f84a6db8dd2fda1d3eb734b86; JSESSIONID=298EB41D7ACC05FD80341D40444CF98";
 
 const Bloom_LIST = new BloomFilter(1000000, 0.001);
 
@@ -26,6 +28,18 @@ function sleep(number){
         return 
     }
 }
+
+// 添加cookie
+async function add_cookie(cookie_str, page, url){
+    let cookies = cookie_str.split(';').map(
+        pair => {
+        let name = pair.trim().slice(0, pair.trim().indexOf('='));
+        let value = pair.trim().slice(pair.trim().indexOf('=') + 1);
+        return {name, value, url}
+    });
+    await page.setCookie(...cookies);
+    // console.log(page.cookies());
+};
 
 // 提取一级域名 只搜集当前域名下的链接
 function get_host(url){
@@ -48,7 +62,7 @@ function get_host(url){
 
 // url识别规则
 function isVaildUrl(url){
-    let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv'];
+    let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv', '.js?', '.css?'];
     // console.log(url)
     //if(url.indexOf(HOST)>0) {
     if(true) {
@@ -98,8 +112,8 @@ function black_url(url){
 // url去重判断存储相关
 // return true存储/false不存储
 function url_deal(res){
-    if(isVaildUrl(JSON.stringify(res))){
-        var url = res_to_url(res, 1);
+    var url = res_to_url(res);
+    if(isVaildUrl(url)){
         // var url = res["url"];
         if(!black_url(url)){
             if(!Bloom_LIST.test(url)){
@@ -110,8 +124,6 @@ function url_deal(res){
                 return true;
             }
         }
-        
-        
     }
     return false;
 }
@@ -121,14 +133,16 @@ async function ajax_get(req){
     if(post_data==null){
         post_data = ""
     }
-    var res = {
-        "method": req.method(),
-        "url": req.url(),
-        "data": post_data,
-        "type": "ajax"
+    if(isVaildUrl(req.url())){
+        var res = {
+            "method": req.method(),
+            "url": req.url(),
+            "data": post_data,
+            "type": "ajax"
+        }
+        //console.log(JSON.stringify(res))
+        url_deal(res);
     }
-    //console.log(JSON.stringify(res))
-    url_deal(res);
     req.continue()
 }
 
@@ -210,7 +224,7 @@ async function href_get(){
 
 
 async function visitPage(browser, url, deep) {
-    //console.log(deep)
+    console.log(deep)
     if(deep===0){
         return
     }
@@ -218,9 +232,15 @@ async function visitPage(browser, url, deep) {
         let cache_url = [];
         
         let page =await browser.newPage();
-        await page.setDefaultNavigationTimeout(0); 
+        
+        if(Cookie_str != ""){
+            await add_cookie(Cookie_str, page, url);
+        }
+        console.log(page.cookies());
+
         page.setRequestInterception(true);
         page.on('request', ajax_get);
+        await page.setDefaultNavigationTimeout(0); 
 
         try{
             await page.goto(url);  

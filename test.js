@@ -76,5 +76,39 @@ function sleep(number){
 
 // console.log(b - a)
 
-var url = "javascript:void(0);"
-console.log(url.indexOf("javascript"))
+// var url = "javascript:void(0);"
+// console.log(url.indexOf("javascript"))
+
+// var cookie_str = "c=to3wGuTN-1632625117028-cf4c89d08dbcf-1277372903; _fmdata=uELNf7mIkZIbXLdzcU21aMym1Pkxld42RaMe7%2F0OEqL5%2FtibJwMPHI1Vq1%2BjYbLQsWlZMCemF3Tvi6d674Tjj85b0pHah%2BhJDOIYww2MqTY%3D; _xid=lph1eBbOiYp%2B3fr3vOqcEhBa3wWAAwICbmdky5RdVp5JN%2Fq2IONzb72d0yrPYe93TX%2FIepkV9xo%2B4Ka4E9gn6g%3D%3D; wmda_uuid=2ee22d828a5761d3ae9efe8d98c2a7de; wmda_visited_projects=%3B18101072869043; ec=UebkL1K1-1642140767728-99636794cc056190373960; _efmdata=GiOQa4ZrtHfgBa158iW6fhjYZgTXLSUBYTdozLkK7kCMRLB%2BQAyuLEg7zP4ZyYZJX2EtCToQuyO1JSi59cToF6eRTz8YeqPx2U21cNC7qEc%3D; 58tj_uuid=83385fd0-5d9e-44fc-9d71-e9f5327c6cb6; new_uv=1; als=0; ishare_sso_username=F3A5B8DE5F87C6027C5310A6A948C79E0F7F5E2D66983F73F127795DD5303D0B; _exid=lph1eBbOiYp%2B3fr3vOqcEhBa3wWAAwICbmdky5RdVp4CxMakW6neFc4%2Fkrzm%2Fm3rKFbz4b2xvWjSqyt4PgPUmA%3D%3D; dunCookie=1cbe781ac68cf854596a86e295703a6a933bfe6938373ac2a24fefd4eef87370004f2d1b2913ae96; benchmark_token=24d22550c223269f84a6db8dd2fda1d3eb734b86; JSESSIONID=298EB41D7ACC05FD80341D40444CF98"
+
+// function get_cookie (cookie_str){
+//     let cookie = cookie_str.split(";").map(
+//         pair => {
+//             let name = pair.trim().slice(0, pair.trim().indexOf('='));
+//             let value = pair.trim().slice(pair.trim().indexOf('=') + 1);
+//             return { name, value }
+//         }
+//     );
+//     return cookie;
+// }
+
+// var cookie = get_cookie(cookie_str);
+// console.log(cookie);
+
+var url = "https://benchmark.58corp.com/eureka/css/wro.css"
+function isVaildUrl(url){
+    let black_list = ['.svg', '.png', '.js', '.jpg', '.ico', '.apk', '.exe', '.css', '.csv'];
+    console.log(url)
+    //if(url.indexOf(HOST)>0) {
+    if(true) {
+        for(var index in black_list){
+            if (url.endsWith(black_list[index])) {
+            return false;
+        }
+    }
+    return true;
+    } else {
+      return false;
+    }
+}
+console.log(isVaildUrl(url))
