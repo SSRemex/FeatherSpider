@@ -1,14 +1,16 @@
 # FeatherSpider
 基于nodejs puppeteer
 依赖安装
-`npm i puppeteer`
-`npm i bloomfilters.js`
+
+`npm i`
+
 运行
 `node main.js`
+
 > test.js  index.js 为测试文件，可忽略
 
 配置说明
-当前配置并未独立出来
+commonjs 做模块化，config.js为配置文件
 
 ```js
 // 开启无头
@@ -19,6 +21,8 @@ const ROOT_URL = "http://www.baidu.com";
 // 递归深度
 const DEEP = 3;
 ```
+
+
 
 模式
 当前不可配置 ，目前重复等级为3 不固定HOST
@@ -49,6 +53,3 @@ form
 后续计划
     加入登录功能
     调研事件点击的效果
-
-BUG:
-    修复了去重不准确的BUG(substr,slice)

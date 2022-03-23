@@ -112,3 +112,6 @@ function isVaildUrl(url){
     }
 }
 console.log(isVaildUrl(url))
+
+const {test, t} = require("./config.js");
+console.log(t);
