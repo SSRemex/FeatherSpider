@@ -23,8 +23,8 @@ if(HOST_LOCKED){
     WHITE_DOMAIN.push(HOST);
     BLACK_DOMAIN = [];
 }
-console.log(WHITE_DOMAIN);
-console.log(BLACK_DOMAIN);
+// console.log(WHITE_DOMAIN);
+// console.log(BLACK_DOMAIN);
 
 //睡眠函数
 function sleep(number){
@@ -60,7 +60,9 @@ function get_host(url){
     try{
     host = host.substring(start+1, relUrl.length);
     }
-    catch{}
+    catch{
+        // console.log(arrUrl)
+    }
     if(host.indexOf("?") != -1){
         host = host.split("?")[0];
     }
