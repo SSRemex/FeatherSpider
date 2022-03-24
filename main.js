@@ -3,19 +3,10 @@ const fs = require('fs');
 const puppeteer = require("puppeteer");
 
 // 加载配置文件
-const {ROOT_URL, Cookie_str, IS_HEADLESS, DEEP, WHITE_DOMAIN, BLACK_DOMAIN, HOST_LOCKED, LEVEL} = require("./config");
-
+const {ROOT_URL, Cookie_str, IS_HEADLESS, DEEP, HOST_LOCKED, LEVEL, TIMEOUT} = require("./config");
+var {WHITE_DOMAIN, BLACK_DOMAIN} = require("./config");
 
 // 配置文件初始化
-if(WHITE_DOMAIN.length!=0){
-    BLACK_DOMAIN = [];
-}
-
-if(HOST_LOCKED){
-    WHITE_DOMAIN = [];
-    BLACK_DOMAIN = [];
-}
-
 
 const HOST = get_host(ROOT_URL)
 const file_name = Date.parse(new Date()) + "_result.txt";
@@ -23,6 +14,17 @@ fs.writeFileSync(file_name, "");
 
 const Bloom_LIST = new BloomFilter(1000000, 0.001);
 
+if(WHITE_DOMAIN.length!=0){
+    BLACK_DOMAIN = [];
+}
+
+if(HOST_LOCKED){
+    WHITE_DOMAIN = [];
+    WHITE_DOMAIN.push(HOST);
+    BLACK_DOMAIN = [];
+}
+console.log(WHITE_DOMAIN);
+console.log(BLACK_DOMAIN);
 
 //睡眠函数
 function sleep(number){
@@ -87,9 +89,16 @@ function isVaildUrl(url){
 function res_to_url(res){
 
     var url = res["url"];
-
-    var l1 = url.lastIndexOf('?');
-    //var l1 = url.lastIndexOf('=');
+    if(LEVEL==1){
+        return url;
+    }
+    
+    if(LEVEL==2){
+        var l1 = url.lastIndexOf('=');
+    }
+    else{
+        var l1 = url.lastIndexOf('?');
+    }
     var l2 = url.lastIndexOf('/');
     
     if(l1===-1&&l2===-1){
@@ -110,24 +119,37 @@ function res_to_url(res){
 
 // 黑域名避免扫描
 function black_url(url){
-    if(url.indexOf("javascript")==0||url.indexOf("data:")==0)
+    if(url.indexOf("http")!=0)
         return true
-
+    // 检测黑名单
     for(var index in BLACK_DOMAIN){
         if (url.indexOf(BLACK_DOMAIN[index])!=-1) {
             return true;
         }
     }
 
-    return false
+    // 检测白名单
+    for(var index in WHITE_DOMAIN){
+        if (url.indexOf(WHITE_DOMAIN[index])!=-1) {
+            return false;
+        }
+    }
+
+    if(WHITE_DOMAIN.length > 0) {
+        return true
+    }
+    else{
+        return false
+    }
+
 }
 
 // url去重判断存储相关
 // return true存储/false不存储
 function url_deal(res){
-    var url = res_to_url(res);
+    var url = res["url"];
     if(isVaildUrl(url)){
-        // var url = res["url"];
+        var url = res_to_url(res);
         if(!black_url(url)){
             if(!Bloom_LIST.test(url)){
                 console.log(url);
@@ -237,7 +259,7 @@ async function href_get(){
 
 
 async function visitPage(browser, url, deep) {
-    console.log(deep)
+    // console.log(deep)
     if(deep===0){
         return
     }
@@ -249,14 +271,13 @@ async function visitPage(browser, url, deep) {
         if(Cookie_str != ""){
             await add_cookie(Cookie_str, page, url);
         }
-        console.log(page.cookies());
+        // console.log(page.cookies());
 
         page.setRequestInterception(true);
         page.on('request', ajax_get);
-        await page.setDefaultNavigationTimeout(0); 
 
         try{
-            await page.goto(url);  
+            await page.goto(url, {timeout: TIMEOUT});  
             var forms = await page.evaluate(form_get);
             var hrefs = await page.evaluate(href_get);
             for(var i=0; i<forms.length; i++){
@@ -284,8 +305,8 @@ async function visitPage(browser, url, deep) {
         }catch(err){
             //console.log(typeof(err));
             console.log(err);
-            page.close();
             await sleep(1);
+            return
         }
     }
 }
@@ -293,9 +314,20 @@ async function visitPage(browser, url, deep) {
 
 async function main(){
     var start = new Date();
-    const browser = await puppeteer.launch({headless: IS_HEADLESS});
+    const browser = await puppeteer.launch({
+        headless: IS_HEADLESS,
+        args: [
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--no-first-run',
+            '--no-sandbox',
+            '--no-zygote',
+            '--disable-dev-shm-usage', // <-- add this one
+            ],
+    });
     await visitPage(browser ,ROOT_URL, DEEP);
-    browser.close();
+    await browser.close();
     var end = new Date();
     var use = (end - start)/1000;
     console.log("DONE!用时："+ use.toString());
